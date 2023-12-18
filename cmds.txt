@@ -1,0 +1,1 @@
+python3 create-inventory-list.py '/Users/floriansteinkellner/Library/CloudStorage/OneDrive-Persönlich/Music Making/_Practice/_Practice Documents/Übungsprotokoll.xlsx' 'Inventar' 56
