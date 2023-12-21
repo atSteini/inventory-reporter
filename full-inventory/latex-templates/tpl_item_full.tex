@@ -1,7 +1,6 @@
 \documentclass[../list/inventory_full.tex]{subfiles}
 %\usepackage{graphicx}
-
-\graphicspath{{../../../img/}}
+\usepackage{hyperref}
 
 \begin{document}
 %items_replacements = [('ITEM_NAME', 'Name'), ('ITEM_COUNT', 'Anzahl'), ('ITEM_TYPE', 'Kategorie'),
@@ -9,20 +8,20 @@
   %            ('ITEM_PUR_DATE', 'Kaufdatum'), ('ITEM_PUR_PRICE', 'Kaufpreis einzeln'),
     %          ('ITEM_OWNER', 'Besitzer'), ('ITEM_PIC_NAME', 'ID')]
 
-\subsection{[ITEM_ID] ITEM_NAME}
+\subsection{[€{ID_LEADING_ZEROES}] €{NAME}}
 
 \begin{figure}[h]
   \centering
-  \includegraphics[height=0.25\pdfpageheight]{ITEM_PIC_NAME}
+  \includegraphics[height=0.2\pdfpageheight]{€{ID}}
   % \caption{ITEM_NAME}
 \end{figure}
 
-Bestand: ITEM_COUNT
+Bestand: €{ANZAHL}
 
-ITEM_DESCRIPTION.
+€{BESCHREIBUNG}.
 
-Kaufdatum: ITEM_PUR_DATE um ITEM_PUR_PRICE € (ITEM_OWNER)
+Kaufdatum: €{KAUFDATUM} um €{KAUFPREIS_EINZELN} € (€{BESITZER})
 
-\pagebreak
+\underline{\href{€{RECHNUNG}}{Link zu Rechnung}}
 
 \end{document}

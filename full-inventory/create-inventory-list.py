@@ -3,28 +3,36 @@ import pandas
 import os
 import glob
 import argparse
+from string import Template
+from pandas.api.types import is_float_dtype
 
-num_args = 5
-tpl_item = 'latex-templates/tpl_item_full.tex'
-tpl_inventory = 'latex-templates/tpl_inventory_full.tex'
-inventory_out_name = 'inventory_full.tex'
-forgig_out_name = 'inventory_forgig.tex'
+TPL_FULL_ITEM = 'latex-templates/tpl_item_full.tex'
+TPL_FULL_MAIN = 'latex-templates/tpl_inventory_full.tex'
+OUT_NAME_FULL = 'inventory_full.tex'
+OUT_NAME_FORGIG = 'inventory_forgig.tex'
 
-output_dir = '.out/'
-dir_items = 'items'
-dir_list = 'main'
+OUT_DIR = '.out/'
+DIR_ITEMS_FULL = 'full/items'
+DIR_MAIN_FULL = 'full/main'
+DIR_ITEMS_FORGIG = 'forgig/items'
+DIR_MAIN_FORGIG = 'forgig/main'
 
-latex_cmd_subfile = ['\\subfile']
-latex_cmd_change_marker = ['\\section']#, '\\chapter']
+LATEXT_CMDS_SUBFILE = ['\\subfile{${SUBFILE}/${ID}}']
+LATEX_CMDS_CHANGE = ['\\pagebreak', '\\section{${SORT_BY}}']#, '\\chapter']
+LATEX_CMDS_AFTER_N_ITEMS = {'cmds': ['\\pagebreak'], 'after_n': 2}
 
-id_col = 'ID'
-items_replacements = [
-  ('ITEM_NAME', 'Name'), ('ITEM_COUNT', 'Anzahl'), ('ITEM_TYPE', 'Kategorie'),
-  ('ITEM_DESCRIPTION', 'Beschreibung'), ('ITEM_ID', 'ID'),
-  ('ITEM_PUR_DATE', 'Kaufdatum'), ('ITEM_PUR_PRICE', 'Kaufpreis einzeln'),
-  ('ITEM_OWNER', 'Besitzer'), ('ITEM_PIC_NAME', 'ID')]
+ID_COL = 'ID'
 
-list_replacements_subfiles = [('ALL_SUBFILES', '{subfile_per_id}'), ('ALL_SUBFILES_WITH_CHANGE_MARKERS', '{subfile_per_id}')]
+REPLACEMENTS_GLOBAL = {
+  'ALL_SUBFILES': '${SUBFILE_CMD}',
+  'ALL_SUBFILES_WITH_CHANGE_MARKERS': '${SECTION_MAKER_AND_SUBFILE_CMD}'
+}
+
+GLOBAL_CONSTANTS = {
+  'AUTHOR': 'Florian Steinkellner'
+}
+
+SUB_IDENTIFIER = ('€{', '${')
 
 CLI = argparse.ArgumentParser()
 CLI.add_argument(
@@ -65,8 +73,8 @@ def main():
   include_change_markers = args.inclmarkers  # bool(sys.argv[5])
 
   if (sort_by_list[0] == 'None'):
-    sort_by = id_col
-  if (sort_by_list[0] == id_col):
+    sort_by = ID_COL
+  if (sort_by_list[0] == ID_COL):
     include_change_markers = False
 
   print(f"Reading '{sheet_name}' from '{filepath}'...")
@@ -79,100 +87,93 @@ def main():
   print(f'Sorting by {sort_by_list}...')
   excel_sheet = excel_sheet.sort_values(sort_by_list)
 
-  # print(excel_sheet["Name"])
-
   sort_by = sort_by_list[0]
 
-  # cleanFolder(os.path.join(output_dir, dir_items))
-  create_all_templates(excel_sheet, tpl_item, items_replacements, id_col, os.path.join(output_dir, dir_items), len(str(num_rows)))
+  create_templates(excel_sheet, TPL_FULL_ITEM, os.path.join(OUT_DIR, DIR_ITEMS_FULL))
   
-  # cleanFolder(os.path.join(output_dir, dir_list))
-  merge_templates(tpl_inventory, os.path.join('..', dir_items), excel_sheet, id_col, os.path.join(output_dir, dir_list, inventory_out_name), include_change_markers, sort_by)
+  merge_templates(TPL_FULL_MAIN, os.path.join('../..', DIR_ITEMS_FULL), excel_sheet, ID_COL, os.path.join(OUT_DIR, DIR_MAIN_FULL, OUT_NAME_FULL), include_change_markers, sort_by)
 
   print('Finished!')
 
   return 0
 
-def merge_templates(list_template: str, full_items_dir: str, df: pandas.DataFrame, id_col: int, out_file: str, incl_markers: bool, sort_by: str):
+def merge_templates(tpl_list: str, full_items_dir: str, df: pandas.DataFrame, id_col: int, out_file: str, incl_markers: bool, sort_by: str):
   file_order = df[id_col]
 
-  template_content = getFileContent(list_template)
-  subfile_per_id = ''
+  template_content = getFileContent(tpl_list, True)
+  latex_subfile_cmd = ''
 
+  num_items = 0
   old_sort_by = atIdAndCol(df, file_order[0], sort_by)
-
   for id in file_order:
     sort_by_val = atIdAndCol(df, id, sort_by)
 
     if (old_sort_by != sort_by_val and incl_markers):
-      for change_marker in latex_cmd_change_marker:
-        subfile_per_id += f'{change_marker}{{{sort_by_val}}}\n'
+      for change_marker in LATEX_CMDS_CHANGE:
+        latex_subfile_cmd += substituteGlobal(Template(change_marker), {'SORT_BY': sort_by_val}) + '\n'
       old_sort_by = sort_by_val
 
-    for subfile_marker in latex_cmd_subfile:
-      subfile_per_id += f'{subfile_marker}{{{full_items_dir}/{id}}}\n'
+    for subfile_marker in LATEXT_CMDS_SUBFILE:
+      latex_subfile_cmd += substituteGlobal(Template(subfile_marker), {'SUBFILE': full_items_dir, 'ID': id}) + '\n'
+    
+    if (num_items != 0 and num_items % LATEX_CMDS_AFTER_N_ITEMS['after_n'] == 0):
+      latex_subfile_cmd += '\n'.join(LATEX_CMDS_AFTER_N_ITEMS['cmds']) + '\n'
 
-  (old, new) = list_replacements_subfiles[1 if incl_markers else 0]
-  template_content = template_content.replace(old, new.format(subfile_per_id = subfile_per_id))
+    num_items += 1
+
+  mapping = getGlobalMappingBy({'SUBFILE_CMD': latex_subfile_cmd, 'SECTION_MAKER_AND_SUBFILE_CMD': latex_subfile_cmd})
+  template_content = substituteGlobal(Template(template_content), mapping)
 
   writeToFile(out_file, template_content)
 
-def create_all_templates(df: pandas.DataFrame, item_template: str, replacements: [tuple], id_col: str, out_dir: str, id_num_dig: int):
+def create_templates(df: pandas.DataFrame, item_template: str, out_dir: str):
   print('Creating all templates...')
 
   for i in df.index:
-    #print(df['ID'][i], df['Kategorie'][i], '\t', df['Name'][i])
-    data = []
-    for (template, col) in replacements:
-      value = df[col][i]
+    row_mapping = getMappingForRow(df, i)
 
-      if (type(value) == pandas.Timestamp):
-        value = timestamp_to_tex(value)
-      
-      if (col == id_col and template != 'ITEM_PIC_NAME'):
-        value = str(value).zfill(id_num_dig)
+    copyAndModifyTemplate(item_template, os.path.join(out_dir, f'{df[ID_COL][i]}.tex'), row_mapping)
 
-      current_value = str(value)
+def copyAndModifyTemplate(tpl_file: str, out_path: str, row_mapping: {}):
+  template_content = getFileContent(tpl_file, True)
 
-      data.append(tuple((template, current_value)))
+  item_content = substituteGlobal(Template(template_content),row_mapping)
 
-    copyAndModifyTemplate(item_template, os.path.join(out_dir, f'{df[id_col][i]}.tex'), data)
+  writeToFile(out_path, item_content)
 
-def copyAndModifyTemplate(item_template: str, out_filepath: str, data: [tuple]):
-  template_content = getFileContent(item_template)
+### Helper functions...
+def substituteGlobal(tpl: Template, mapping: dict):
+  mapping_with_global = mapping
+  mapping_with_global.update(GLOBAL_CONSTANTS)
 
-  item_content = template_content
-  for (old, new) in data:
-    item_content = item_content.replace(old, tex_escape(new).strip())
+  return tpl.safe_substitute(mapping_with_global)
 
-  writeToFile(out_filepath, item_content)
+def getGlobalMappingBy(sub_dict: dict):
+  ret_dict = {}
 
-def cleanFolder(dir: str):
-  if (not os.path.exists(dir)):
-    print(f'{dir} does not exist. Making directory...')
+  for key in REPLACEMENTS_GLOBAL:
+    value = REPLACEMENTS_GLOBAL[key]
 
-    os.makedirs(dir)
+    ret_dict[key] = substituteGlobal(Template(value), sub_dict)
 
-    return
-
-  print(f'Cleaning {dir}...')
-
-  files = glob.glob(f'{dir}/*')
-  for f in files:
-    os.remove(f)
+  return ret_dict
 
 def writeToFile(file: str, content: str):
   with open(file, 'w') as output_file:
     output_file.write(content)
 
-def getFileContent(file: str):
+def getFileContent(file: str, sub_from_latex: bool):
   file_content = None
+
   with open(file, 'r') as template:
     file_content = template.read()
   
+  if (sub_from_latex):
+    file_content = file_content.replace(SUB_IDENTIFIER[0], SUB_IDENTIFIER[1])
+  
   return file_content
 
-def timestamp_to_tex(ts: pandas.Timestamp):
+def timestamp_to_tex(ts: pandas.Timestamp) -> str:
   return ts.to_pydatetime().strftime('%m.%d.%Y')
 
 def tex_escape(text: str):
@@ -199,8 +200,27 @@ def tex_escape(text: str):
 
     return text.translate(str.maketrans(translation_table))
 
+def getMappingForRow(df: pandas.DataFrame, item_id: int) -> {}:
+  ret_dict = {}
+  num_rows = len(df.index)
+
+  for column in df.columns:
+    value = atIdAndCol(df, item_id, column)
+
+    if (type(value) == pandas.Timestamp):
+      value = value.strftime('%d.%m.%Y')
+    elif (is_float_dtype(value)):
+      value = f"{value:.2f}"
+
+    if (column == ID_COL):
+      ret_dict['ID_LEADING_ZEROES'] = str(value).zfill(len(str(num_rows)))
+
+    ret_dict[column.replace(' ', '_').upper()] = tex_escape(str(value))
+
+  return ret_dict
+
 def atIdAndCol(df: pandas.DataFrame, id: int, col: str):
-  return df.at[df[df[id_col] == id].index[0], col]
+  return df.at[df[df[ID_COL] == id].index[0], col]
 
 if __name__ == '__main__':
     main()

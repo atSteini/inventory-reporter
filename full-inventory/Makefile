@@ -5,9 +5,9 @@ INCLUDE_CHANGE_MARKERS := True
 
 IMG_PATH := img/
 
-OUT_PATH_FORGIG = .out/forgig
-OUT_PATH_ITEMS_FORGIG = .out/forgig/items
-OUT_PATH_MAIN_FORGIG = .out/forgig/main
+OUT_PATH_GIG = .out/forgig
+OUT_PATH_ITEMS_GIG = .out/forgig/items
+OUT_PATH_MAIN_GIG = .out/forgig/main
 
 OUT_PATH_FULL := .out/full
 OUT_PATH_ITEMS_FULL := .out/full/items
@@ -16,7 +16,7 @@ OUT_PATH_MAIN_FULL := .out/full/main
 PYTHON_SCRIPT := create-inventory-list.py
 
 MAIN_TEX_NAME_FULL := inventory_full
-MAIN_TEX_NAME_FORGIG := inventory_forgig
+MAIN_TEX_NAME_GIG := inventory_forgig
 
 .DEFAULT_GOAL := default
 .PHONY: default clean bin all run test help
@@ -25,48 +25,49 @@ default: help
 
 clean: cleanfull cleanforgig
 
-cleanfull:
-@printf "[\e[0;36mINFO\e[0m] Cleaning up full list folders...\n"
-rm -f -d -r $(OUT_PATH)
-rm -f $(MAIN_TEX_NAME_FULL).pdf
+clean_full:
+	@printf "[\e[0;36mINFO\e[0m] Cleaning up full list folders...\n"
+	rm -f -d -r $(OUT_PATH_FULL)
+	rm -f $(MAIN_TEX_NAME_FULL).pdf
 
-cleanforgig:
-@printf "[\e[0;36mINFO\e[0m] Cleaning up gig folders...\n"
-rm -f -d -r $(OUT_PATH_FORGIG)
-rm -f $(MAIN_TEX_NAME_FORGIG).pdf
+clean_gig:
+	@printf "[\e[0;36mINFO\e[0m] Cleaning up gig folders...\n"
+	rm -f -d -r $(OUT_PATH_GIG)
+	rm -f $(MAIN_TEX_NAME_GIG).pdf
 
-all: clean
+run: clean run_full run_gig
 
-fulllist: all	
+run_full: clean_full
 	@printf "Creating .out folders...\n"
-	mkdir $(OUT_PATH)
-	mkdir $(OUT_PATH_ITEMS)
-	mkdir $(OUT_PATH_MAIN)
+	mkdir $(OUT_PATH_FULL)
+	mkdir $(OUT_PATH_ITEMS_FULL)
+	mkdir $(OUT_PATH_MAIN_FULL)
 
 	@printf "[\e[0;36mINFO\e[0m] Executing python script...\n"
+	python3 --version
 	python3 $(PYTHON_SCRIPT) -filepath $(PATH_TO_EXCEL) -sheet $(SHEET) --sorts $(SORT_BY) --inclmarkers $(INCLUDE_CHANGE_MARKERS)
 	@printf "[\e[0;36mINFO\e[0m] Python script finished!\n"
 
 	@printf "[\e[0;36mINFO\e[0m] Generating pdf...\n"
-	cd "$(OUT_PATH_MAIN)"; pdflatex $(MAIN_TEX_NAME).tex; pdflatex $(MAIN_TEX_NAME).tex; 
+	cd "$(OUT_PATH_MAIN_FULL)"; pdflatex $(MAIN_TEX_NAME_FULL).tex; pdflatex $(MAIN_TEX_NAME_FULL).tex; 
 
-	cp $(OUT_PATH_MAIN)/$(MAIN_TEX_NAME).pdf $(MAIN_TEX_NAME).pdf
+	cp $(OUT_PATH_MAIN_FULL)/$(MAIN_TEX_NAME_FULL).pdf $(MAIN_TEX_NAME_FULL).pdf
 	@printf "[\e[0;36mINFO\e[0m] Finished generating pdf!\n"
 
-forgig: all	
+run_gig: clean_gig	
 	@printf "Creating .out folders...\n"
-	mkdir $(OUT_PATH)
-	mkdir $(OUT_PATH_ITEMS)
-	mkdir $(OUT_PATH_MAIN)
+	mkdir $(OUT_PATH_GIG)
+	mkdir $(OUT_PATH_ITEMS_GIG)
+	mkdir $(OUT_PATH_MAIN_GIG)
 
 	@printf "[\e[0;36mINFO\e[0m] Executing python script...\n"
 	python3 $(PYTHON_SCRIPT) -filepath $(PATH_TO_EXCEL) -sheet $(SHEET) --sorts $(SORT_BY) --inclmarkers $(INCLUDE_CHANGE_MARKERS)
 	@printf "[\e[0;36mINFO\e[0m] Python script finished!\n"
 
 	@printf "[\e[0;36mINFO\e[0m] Generating pdf...\n"
-	cd "$(OUT_PATH_MAIN)"; pdflatex $(MAIN_TEX_NAME).tex; pdflatex $(MAIN_TEX_NAME).tex; 
+	cd "$(MAIN_TEX_NAME_GIG)"; pdflatex $(MAIN_TEX_NAME_GIG).tex; pdflatex $(MAIN_TEX_NAME_GIG).tex; 
 
-	cp $(OUT_PATH_MAIN)/$(MAIN_TEX_NAME).pdf $(MAIN_TEX_NAME).pdf
+	cp $(OUT_PATH_MAIN_GIG)/$(MAIN_TEX_NAME_GIG).pdf $(MAIN_TEX_NAME_GIG).pdf
 	@printf "[\e[0;36mINFO\e[0m] Finished generating pdf!\n"
 
 help:
