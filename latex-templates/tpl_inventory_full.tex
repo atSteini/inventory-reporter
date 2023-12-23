@@ -3,21 +3,27 @@
 \usepackage{blindtext}
 \usepackage{titlesec}
 \usepackage{hyperref}
+\usepackage{lastpage}
 
 \usepackage{subfiles} % Best loaded last in the preamble
 
 \usepackage{fancyhdr}
 
+\title{Inventar}
+\author{€{AUTHOR}}
+\date{\today}
+
 \pagestyle{fancy}
 \fancyhf{}
 
 \fancyhead[L]{\leftmark}
-\fancyhead[R]{\thepage}
+\fancyhead[R]{\thepage of \pageref*{LastPage}}
 \setlength{\headheight}{14.0pt}
 
-\fancyfoot[L]{\author}
+\fancyfoot[L]{€{AUTHOR}}
+\fancyfoot[R]{€{COPYRIGHT}}
 
-\graphicspath{{../../../../img/}}
+\graphicspath{{../../../img/}}
 
 \hypersetup{
   colorlinks,
@@ -27,15 +33,11 @@
   urlcolor=black
 }
 
-\title{Inventar}
-\author{${AUTHOR}}
-\date{\today}
-
 \begin{document}
 
 \maketitle
 
-\tableofcontents
+€{TOC}
 
 \pagebreak
 

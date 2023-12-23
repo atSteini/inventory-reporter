@@ -1,0 +1,42 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{blindtext}
+\usepackage{titlesec}
+\usepackage{hyperref}
+
+\usepackage{subfiles} % Best loaded last in the preamble
+
+\usepackage{fancyhdr}
+
+\pagestyle{fancy}
+\fancyhf{}
+
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{\thepage}
+\setlength{\headheight}{14.0pt}
+
+\fancyfoot[L]{\author}
+
+\graphicspath{{../../../img/}}
+
+\hypersetup{
+  colorlinks,
+  citecolor=black,
+  filecolor=black,
+  linkcolor=black,
+  urlcolor=black
+}
+
+\title{Ausrüstung €{GIG_DATUM} - €{GIG_BAND}}
+\author{€{AUTHOR}}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+€{TOC}
+
+€{ALL_SUBFILES_WITH_CHANGE_MARKERS}
+
+\end{document}
