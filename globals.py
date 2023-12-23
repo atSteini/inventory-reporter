@@ -15,7 +15,7 @@ REPLACEMENTS_GLOBAL = {
 
 GLOBAL_CONSTANTS = {
   'AUTHOR': 'Florian Steinkellner',
-  'COPYRIGHT': r'2023/12 \vert F.S.'
+  'COPYRIGHT': r'\copyright  Florian Steinkellner'
 }
 
 DEFAULT_GEAR_NAME_KV = ['Name', 'IDs']

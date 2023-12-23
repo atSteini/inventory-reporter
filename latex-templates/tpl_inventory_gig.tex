@@ -8,14 +8,19 @@
 
 \usepackage{fancyhdr}
 
+\title{Ausrüstung €{GIG_DATUM} - €{GIG_BAND}}
+\author{€{AUTHOR}}
+\date{\today}
+
 \pagestyle{fancy}
 \fancyhf{}
 
 \fancyhead[L]{\leftmark}
-\fancyhead[R]{\thepage}
+\fancyhead[R]{{\thepage} of {\pageref*{LastPage}}}
 \setlength{\headheight}{14.0pt}
 
-\fancyfoot[L]{\author}
+\fancyfoot[L]{\today}
+\fancyfoot[R]{€{COPYRIGHT}}
 
 \graphicspath{{../../../img/}}
 
@@ -26,10 +31,6 @@
   linkcolor=black,
   urlcolor=black
 }
-
-\title{Ausrüstung €{GIG_DATUM} - €{GIG_BAND}}
-\author{€{AUTHOR}}
-\date{\today}
 
 \begin{document}
 
