@@ -5,6 +5,8 @@ from string import Template
 import globals as gb
 import json
 
+# TODO: section change cmds still not working!
+
 TPL_FULL_ITEM = 'latex-templates/tpl_item_full.tex'
 TPL_FULL_MAIN = 'latex-templates/tpl_inventory_full.tex'
 OUT_NAME_FULL = 'inventory_full.tex'
@@ -224,7 +226,7 @@ def getSubstituteContentMain(df: pandas.DataFrame, path_to_item_from_main: str, 
   old_sort_by = gb.atIdAndCol(df, id_col, file_order.iloc[0], sort_by)
   is_first_sort_check = True
 
-  after_n_value = latex_after_n['after_n_insection'] if latex_after_n['after_n_insection'] > 0 else latex_after_n['after_n_total']
+  after_n_value = latex_after_n['after_n_insection'] if incl_markers else latex_after_n['after_n_total']
 
   for id in file_order:
     sort_by_val = gb.atIdAndCol(df, id_col, id, sort_by)
@@ -235,21 +237,20 @@ def getSubstituteContentMain(df: pandas.DataFrame, path_to_item_from_main: str, 
     if ((is_first_sort_check and incl_markers) or (old_sort_by != sort_by_val and incl_markers)):
       is_first_sort_check = False
       old_sort_by = sort_by_val
+      item_counter_insection = 0
 
       for section_cmd in latex_section_cmds:
         latex_subfile_cmd += gb.substituteGlobal(Template(section_cmd), substitutions) + '\n'
-        item_counter_insection = 0
 
     for subfile_cmd in LATEXT_CMDS_SUBFILE:
       latex_subfile_cmd += gb.substituteGlobal(Template(subfile_cmd), substitutions) + '\n'
 
+    item_counter_total += 1
+    item_counter_insection += 1
     item_counter = item_counter_insection if (latex_after_n['after_n_insection'] > 0) else item_counter_total
 
     if (after_n_value > 0 and item_counter != 0 and item_counter % after_n_value == 0):
       latex_subfile_cmd += '\n'.join(latex_after_n['cmds']) + '\n'
-
-    item_counter_total += 1
-    item_counter_insection += 1
   
   return latex_subfile_cmd
 
