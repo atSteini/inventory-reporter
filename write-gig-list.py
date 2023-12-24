@@ -1,6 +1,7 @@
 import pandas
 import argparse
 import globals as gb
+from collections import Counter
 
 CLI = argparse.ArgumentParser(
   prog="Gig List writer",
@@ -102,6 +103,8 @@ def main():
     nd_name_col=named_gear_kv[0],
     nd_val_col=named_gear_kv[1]
   )
+
+  gig_data['unique_ids'] = dict(Counter(gig_data['ids']))
 
   gig_data.update(gb.getMapping(gig))
 

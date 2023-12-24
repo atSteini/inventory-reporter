@@ -5,7 +5,7 @@ from string import Template
 import globals as gb
 import json
 
-# TODO: section change cmds still not working!
+# TODO: Write Anzahl von items when gig list contains id multiple times
 
 TPL_FULL_ITEM = 'latex-templates/tpl_item_full.tex'
 TPL_FULL_MAIN = 'latex-templates/tpl_inventory_full.tex'
@@ -187,6 +187,7 @@ def main():
   if (only_ids[0] != -1):
     print("Filtering data by ids...")
     excel_sheet = excel_sheet.loc[excel_sheet[id_col].isin(only_ids)]
+    excel_sheet = addGigCount(excel_sheet, gig_data['GIG_UNIQUE_IDS'])
 
   sort_by = sort_by_list[0]
 
@@ -285,6 +286,13 @@ def copyAndModifyTemplate(tpl_file: str, out_path: str, row_mapping: {}):
   item_content = gb.substituteGlobal(Template(template_content),row_mapping)
 
   gb.writeToFile(out_path, item_content)
+
+def addGigCount(df: pandas.DataFrame, lookup: dict) -> pandas.DataFrame:
+  df_new = df
+  values = list(lookup.values())
+  df_new.insert(5, 'GIG_ITEM_COUNT', values, True)
+
+  return df_new
 
 ### Helper functions...
 def getGigDataFromFile(file: str, nd_id_col: str) -> dict:
