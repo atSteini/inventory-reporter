@@ -2,6 +2,7 @@ import pandas
 import argparse
 import globals as gb
 from collections import Counter
+import json
 
 CLI = argparse.ArgumentParser(
   prog="Gig List writer",
@@ -121,11 +122,11 @@ def writeDataToFile(file: str, data: dict):
     value = data[key]
 
     if (type(value) == list):
-      data[key] = gb.ARR_SEP.join(value)
+      data[key] = gb.ARR_SEP.join(str(element) for element in value)
 
     data_repl_keys['GIG_'+str(key).upper()] = data[key]
 
-  gb.writeToFile(file, str(data_repl_keys).replace("'", '"'))
+  gb.writeToFile(file, json.dumps(data_repl_keys))
 
 def getAllIds(single_gig: pandas.DataFrame, nd_gear_sheet: pandas.DataFrame, gear_col: str, nd_name_col: str, nd_val_col: str) -> [int]:
   content = str(single_gig.iloc[0][gear_col])
@@ -134,6 +135,8 @@ def getAllIds(single_gig: pandas.DataFrame, nd_gear_sheet: pandas.DataFrame, gea
 
   ids = []
   for token in tokens:
+    token = token.strip()
+
     if (token.isnumeric()):
       ids.append(int(token))
       continue
@@ -146,6 +149,9 @@ def getAllIds(single_gig: pandas.DataFrame, nd_gear_sheet: pandas.DataFrame, gea
 
 def getIdsOfNamedGear(df: pandas.DataFrame, gear_name: str, name_col: str, value_col: str) -> str:
   ids = (df.loc[df[name_col] == gear_name][value_col])
+
+  if (ids.empty):
+    return None
 
   return str(ids.iloc[0])
 

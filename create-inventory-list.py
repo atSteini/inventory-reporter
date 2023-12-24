@@ -179,17 +179,25 @@ def main():
   excel_sheet = excel_sheet.sort_values(sort_by_list)
 
   if (get_gig_data_from != None):
+    print(f'Loading gig data from {get_gig_data_from}...')
+
     gig_data = getGigDataFromFile(get_gig_data_from, named_gear_id_col)
     gb.GLOBAL_CONSTANTS.update(gig_data)
 
     only_ids = gig_data[named_gear_id_col]
+    only_ids_unique = list(set(only_ids))
 
   if (only_ids[0] != -1):
     print("Filtering data by ids...")
-    excel_sheet = excel_sheet.loc[excel_sheet[id_col].isin(only_ids)]
+    excel_sheet = excel_sheet.loc[excel_sheet[id_col].isin(only_ids_unique)]
     excel_sheet = addGigCount(excel_sheet, gig_data['GIG_UNIQUE_IDS'])
 
   sort_by = sort_by_list[0]
+
+  substitutions = {
+    'TOC_IF_MARKERS': r'\tableofcontents' if include_change_markers else '',
+    'ITEM_COUNT_TOTAL': len(excel_sheet.index) if only_ids[0] == -1 else len(only_ids) 
+  }
 
   createTemplates(
     df=excel_sheet, 
@@ -212,7 +220,8 @@ def main():
     template_content=gb.getFileContent(tpl_main, True), 
     sub_content=main_sub_content, 
     img_path=img_path,
-    sub_additions={'TOC_IF_MARKERS': r'\tableofcontents' if include_change_markers else ''})
+    sub_additions=substitutions
+  )
 
   print('Finished!')
 
@@ -289,7 +298,11 @@ def copyAndModifyTemplate(tpl_file: str, out_path: str, row_mapping: {}):
 
 def addGigCount(df: pandas.DataFrame, lookup: dict) -> pandas.DataFrame:
   df_new = df
-  values = list(lookup.values())
+  values = []
+
+  for i in df_new.index:
+    values.append(lookup[str(i)])
+
   df_new.insert(5, 'GIG_ITEM_COUNT', values, True)
 
   return df_new
@@ -301,7 +314,7 @@ def getGigDataFromFile(file: str, nd_id_col: str) -> dict:
   with open(file, 'r') as f:
     data = f.read()
 
-  js_data = json.loads(data)
+  js_data = json.loads(data.replace("'", '"'))
   ids_str_list = (str(js_data[nd_id_col]).split(gb.ARR_SEP))
   js_data[nd_id_col] = [int(x) for x in ids_str_list]
   

@@ -29,6 +29,7 @@ The following placeholders can be used which will have different values dependin
 * ```IMG_PATH``` - static replacement with value of ```--imgpath```.
 * ```TOC``` - display a table of contents if ```--writesection``` is ```1```.
 * ```GIG_ITEM_COUNT``` - if ```--gigdatafrom``` is passed, this will be replaced by the number of times the item was taken on the gig.
+* ```ITEM_COUNT_TOTAL``` - the total item count in list
 
 ### Globals.py
 Also, Globally, there are certain constants which can be modified in the ```globals.py -> REPLACEMENTS_GLOBAL``` variable. Maybe I`ll add these globals as a cmd-line argument one day. Following constants can be used in all template files:
