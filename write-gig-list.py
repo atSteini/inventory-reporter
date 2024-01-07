@@ -142,7 +142,11 @@ def getAllIds(single_gig: pandas.DataFrame, nd_gear_sheet: pandas.DataFrame, gea
       continue
     
     named_ids = getIdsOfNamedGear(nd_gear_sheet, token, nd_name_col, nd_val_col)
-
+    
+    if (named_ids == None):
+      print(f"Could not find ids for '{token}' in '{nd_gear_sheet}'! Skipping...")
+      continue
+    
     ids += named_ids.split(gb.ARR_SEP)
 
   return ids
