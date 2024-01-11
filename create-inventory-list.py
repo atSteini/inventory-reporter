@@ -20,7 +20,7 @@ DIR_ITEMS_FORGIG = 'forgig/items'
 DIR_MAIN_FORGIG = 'forgig/main'
 
 LATEXT_CMDS_SUBFILE = ['\\subfile{${SUBFILE}/${ID}}']
-LATEX_CMDS_CHANGE = ['\\pagebreak', '\\section{${KATEGORIE}}']#, '\\chapter']
+LATEX_CMDS_CHANGE = ['\\section{${KATEGORIE}}']#, '\\chapter']
 LATEX_CMDS_AFTER_N_ITEMS = {'cmds': ['\\pagebreak'], 'after_n_insection': 2, 'after_n_total': 10}
 
 CLI=argparse.ArgumentParser(
@@ -199,6 +199,8 @@ def main():
     'ITEM_COUNT_TOTAL': len(excel_sheet.index) if only_ids[0] == -1 else len(only_ids) 
   }
 
+  print(countItemsInSections(excel_sheet, sort_by))
+
   createTemplates(
     df=excel_sheet, 
     item_template=tpl_item, 
@@ -231,22 +233,38 @@ def getSubstituteContentMain(df: pandas.DataFrame, path_to_item_from_main: str, 
   file_order = df[id_col]
 
   latex_subfile_cmd = ''
-  item_counter_total = 0
-  item_counter_insection = 0
+  item_counter_total = 0            # total number of items
+  item_counter_insection = 0        # number of items in current section, gets reset if new section starts
+  item_counter_before_break = 0     # number of items before break, gets reset if new page starts
+  item_counter = 0                  # number of items in current section if after_n_insection > 0, else number of items on current page
+  next_section_num_items = -1       # number of items in next section
   old_sort_by = gb.atIdAndCol(df, id_col, file_order.iloc[0], sort_by)
   is_first_sort_check = True
 
-  after_n_value = latex_after_n['after_n_insection'] if incl_markers else latex_after_n['after_n_total']
+  after_n_value = latex_after_n['after_n_insection'] if (incl_markers and latex_after_n['after_n_insection'] > 0) else latex_after_n['after_n_total']
+  until_section_change = -1
+  overrideBreak = False
+  broke_in_middle_of_section = False
 
-  for id in file_order:
+  for i, id in enumerate(file_order):
     sort_by_val = gb.atIdAndCol(df, id_col, id, sort_by)
 
     substitutions = gb.getMappingForRow(df, id, id_col)
     substitutions.update({'SORT_BY': sort_by_val, 'SUBFILE': path_to_item_from_main})
 
+    item_counter_before_break += 1
+    until_section_change = countUntilNextSectionChange(df, id_col, sort_by, i)
+
+    if (until_section_change == 0):
+      next_section_num_items = countUntilNextSectionChange(df, id_col, sort_by, i + 1) + 1
+      if (next_section_num_items >= 0 and item_counter_before_break + next_section_num_items > after_n_value):
+        overrideBreak = True and not broke_in_middle_of_section
+        next_section_num_items = -1
+
     if ((is_first_sort_check and incl_markers) or (old_sort_by != sort_by_val and incl_markers)):
       is_first_sort_check = False
       old_sort_by = sort_by_val
+      
       item_counter_insection = 0
 
       for section_cmd in latex_section_cmds:
@@ -257,12 +275,47 @@ def getSubstituteContentMain(df: pandas.DataFrame, path_to_item_from_main: str, 
 
     item_counter_total += 1
     item_counter_insection += 1
-    item_counter = item_counter_insection if (latex_after_n['after_n_insection'] > 0) else item_counter_total
+    item_counter = item_counter_insection if (latex_after_n['after_n_insection'] > 0) else item_counter_before_break
+    break_because_aftern = (after_n_value > 0 and item_counter != 0 and item_counter % after_n_value == 0)
 
-    if (after_n_value > 0 and item_counter != 0 and item_counter % after_n_value == 0):
+    if (break_because_aftern or overrideBreak):
       latex_subfile_cmd += '\n'.join(latex_after_n['cmds']) + '\n'
+      item_counter_before_break = 0
+      overrideBreak = False
+      broke_in_middle_of_section = until_section_change > 0
   
   return latex_subfile_cmd
+
+def countItemsInSections(df: pandas.DataFrame, sort_by: str) -> dict:
+  ret_dict = {}
+  all_sort_by_values = set(df[sort_by])
+  for sort_by_val in all_sort_by_values:
+    num_items = len(df[df[sort_by] == sort_by_val])
+    ret_dict[sort_by_val] = num_items
+  return ret_dict
+
+def countUntilNextSectionChange(df: pandas.DataFrame, id_col: str, sort_by: str, start_index: int):
+  if (start_index >= len(df.index) or df.size == 0):
+    return 0
+  
+  if (start_index == len(df.index) - 1):
+    return 1
+
+  old_sort_by = gb.atIdAndCol(df, id_col, df.index[start_index], sort_by)
+  num_items_until_unequal = 0
+
+  for i, id in enumerate(df.index):
+    if (i <= start_index):
+      continue
+    
+    sort_by_val = gb.atIdAndCol(df, id_col, id, sort_by)
+
+    if (old_sort_by != sort_by_val):
+      break
+
+    num_items_until_unequal += 1
+
+  return num_items_until_unequal
 
 def mergeTemplates(out_file: str, template_content: str, sub_content: str, img_path: str, sub_additions: dict):
   print("Merging templates...")
@@ -315,8 +368,8 @@ def getGigDataFromFile(file: str, nd_id_col: str) -> dict:
     data = f.read()
 
   js_data = json.loads(data.replace("'", '"'))
-  ids_str_list = (str(js_data[nd_id_col]).split(gb.ARR_SEP))
-  js_data[nd_id_col] = [int(x) for x in ids_str_list]
+  ids_str_list = [int(x) for x in str(js_data[nd_id_col]).split(gb.ARR_SEP) if x != '']
+  js_data[nd_id_col] = ids_str_list
   
   return js_data
 

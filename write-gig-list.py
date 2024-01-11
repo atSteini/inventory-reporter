@@ -59,6 +59,22 @@ CLI.add_argument(
   type=str,
   default=gb.ID_COL
 )
+CLI.add_argument(
+  "--checklist",
+  type=str,
+  nargs='*',
+  default=[]
+)
+CLI.add_argument(
+  "--claddnewline",
+  type=bool,
+  default=False
+)
+CLI.add_argument(
+  "--clprefix",
+  type=str,
+  default=gb.CHECKLIST_PREFIX
+)
 
 def main():
   args = CLI.parse_args()
@@ -73,6 +89,9 @@ def main():
   id_col = args.idcol
   named_gear_kv = args.namedgearcols
   out_path = args.outpath
+  checklist = args.checklist
+  checklist_add_newline = args.claddnewline
+  checklist_prefix = args.clprefix
 
   print(f"Reading '{gig_sheet}' from '{file_path}'...")
 
@@ -109,7 +128,15 @@ def main():
 
   gig_data.update(gb.getMapping(gig))
 
-  print(f"Writing gig data to {out_path}...")
+  if (len(checklist) > 0):
+    checklist_for_latex = ""
+    cmd_newline = '\n\n'
+    for item in checklist:
+      item_tex = gb.tex_escape(item)
+      checklist_for_latex += f"{checklist_prefix}{item_tex}{cmd_newline if checklist_add_newline else ''}\n"
+    gig_data.update({'checklist': checklist_for_latex})
+
+  print(f"Writing gig data for [{gig_data['ID']}] {gig_data['BAND']}/{gig_data['DATUM']} to {out_path}...")
 
   writeDataToFile(out_path, gig_data)
 
@@ -124,7 +151,7 @@ def writeDataToFile(file: str, data: dict):
     if (type(value) == list):
       data[key] = gb.ARR_SEP.join(str(element) for element in value)
 
-    data_repl_keys['GIG_'+str(key).upper()] = data[key]
+    data_repl_keys['GIG_' + str(key).upper()] = data[key]
 
   gb.writeToFile(file, json.dumps(data_repl_keys))
 

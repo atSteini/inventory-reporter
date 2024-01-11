@@ -16,12 +16,14 @@ REPLACEMENTS_GLOBAL = {
 
 GLOBAL_CONSTANTS = {
   'AUTHOR': 'Florian Steinkellner',
-  'COPYRIGHT': r'\copyright  Florian Steinkellner'
+  'COPYRIGHT': r'\copyright\  Florian Steinkellner'
 }
 
 DEFAULT_GEAR_NAME_KV = ['Name', 'IDs']
 
 SUB_IDENTIFIER = ('€{', '${')
+
+CHECKLIST_PREFIX = r'$\square$ '
 
 def getMapping(row: pandas.DataFrame) -> dict:
   ret_dict = {}
@@ -49,7 +51,11 @@ def getMappingForRow(df: pandas.DataFrame, item_id: int, id_col: str) -> dict:
   return mapping
 
 def atIdAndCol(df: pandas.DataFrame, id_col: str, id: int, col: str):
-  return df.at[atId(df, id_col, id).index[0], col]
+  at_id = atId(df, id_col, id)
+  if (at_id.empty):
+    return None
+  
+  return df.at[at_id.index[0], col]
 
 def atId(df: pandas.DataFrame, id_col: str, id: int):
   return df[df[id_col] == id]

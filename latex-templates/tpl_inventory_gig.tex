@@ -3,6 +3,8 @@
 \usepackage{blindtext}
 \usepackage{titlesec}
 \usepackage{hyperref}
+\usepackage{amssymb}
+\usepackage{lastpage}
 
 \usepackage{subfiles} % Best loaded last in the preamble
 
@@ -23,6 +25,9 @@
 \fancyfoot[L]{\today}
 \fancyfoot[R]{€{COPYRIGHT}}
 
+\titleformat{\section}
+  {\normalfont\Large\bfseries}{\thesection}{1em}{}[{\titlerule[0.8pt]}]
+
 \graphicspath{{../../../img/}}
 
 \hypersetup{
@@ -37,7 +42,12 @@
 
 \maketitle
 
+€{GIG_BEMERKUNG}
+
+€{GIG_CHECKLIST}
+
 €{TOC}
+\pagebreak
 
 % \section*{€{ITEM_COUNT_TOTAL} items}
 
