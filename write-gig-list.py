@@ -157,7 +157,7 @@ def writeDataToFile(file: str, data: dict):
 
   gb.writeToFile(file, json.dumps(data_repl_keys))
 
-def getAllIds(single_gig: pandas.DataFrame, nd_gear_sheet: pandas.DataFrame, gear_col: str, nd_name_col: str, nd_val_col: str) -> [int]:
+def getAllIds(single_gig: pandas.DataFrame, nd_gear_sheet: pandas.DataFrame, gear_col: str, nd_name_col: str, nd_val_col: str) -> list[int]:
   content = str(single_gig.iloc[0][gear_col])
 
   tokens = content.split(gb.ARR_SEP)
