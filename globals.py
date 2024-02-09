@@ -25,6 +25,8 @@ SUB_IDENTIFIER = ('€{', '${')
 
 CHECKLIST_PREFIX = r'$\square$ '
 
+SECTION_WEIGHT = 1
+
 def getMapping(row: pandas.DataFrame) -> dict:
   ret_dict = {}
   first = row.iloc[0]

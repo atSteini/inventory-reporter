@@ -124,6 +124,8 @@ def main():
     nd_val_col=named_gear_kv[1]
   )
 
+  gig_data['ids'] = [str(id) for id in gig_data['ids']]
+
   gig_data['unique_ids'] = dict(Counter(gig_data['ids']))
 
   gig_data.update(gb.getMapping(gig))

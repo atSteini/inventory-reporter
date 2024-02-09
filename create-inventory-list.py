@@ -257,16 +257,18 @@ def getSubstituteContentMain(df: pandas.DataFrame, path_to_item_from_main: str, 
 
     if (until_section_change == 0):
       next_section_num_items = countUntilNextSectionChange(df, id_col, sort_by, i + 1) + 1
-      if (next_section_num_items >= 0 and item_counter_before_break + next_section_num_items > after_n_value):
+      if (next_section_num_items >= 0 and item_counter_before_break + (next_section_num_items + gb.SECTION_WEIGHT) > after_n_value):
         overrideBreak = True and not broke_in_middle_of_section
         next_section_num_items = -1
 
     if ((is_first_sort_check and incl_markers) or (old_sort_by != sort_by_val and incl_markers)):
+      # mark new section
       is_first_sort_check = False
       old_sort_by = sort_by_val
       
       item_counter_insection = 0
 
+      item_counter_before_break += gb.SECTION_WEIGHT
       for section_cmd in latex_section_cmds:
         latex_subfile_cmd += gb.substituteGlobal(Template(section_cmd), substitutions) + '\n'
 
